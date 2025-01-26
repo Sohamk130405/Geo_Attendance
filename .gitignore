@@ -29,3 +29,7 @@ client/.env
 server/.env
 
 .venv
+
+
+client/geo_attendance-privateKey.key
+client/geo_attendance.crt
