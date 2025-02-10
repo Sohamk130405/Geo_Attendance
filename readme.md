@@ -216,6 +216,10 @@ This project is a full-stack application that uses geo-location and facial recog
 - pillow
 
 
+## Results
+
+![Results](./client/public/results.png)
+
 ---
 
 Feel free to contribute to this project by submitting issues or pull requests. For any questions, please contact the project maintainer.
