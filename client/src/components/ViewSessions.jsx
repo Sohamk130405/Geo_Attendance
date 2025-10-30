@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getFacultySessions } from "../api"; // Assuming you have this API
+import { getFacultySessions } from "../api.js"; // Assuming you have this API
 import { toast } from "react-toastify";
 
+// eslint-disable-next-line react/prop-types
 const ViewSessions = ({ facultyId }) => {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);

@@ -1,8 +1,8 @@
-import { createAttendanceSession } from "../api";
+import { createAttendanceSession } from "../api.js";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useLocationHandler } from "../hooks/useLocation"; // ✅ use modular hook
+import { useLocationHandler } from "../hooks/useLocation.js"; // ✅ use modular hook
 
 const CreateSession = () => {
   const [formData, setFormData] = useState({

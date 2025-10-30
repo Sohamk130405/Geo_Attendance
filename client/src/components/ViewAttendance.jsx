@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getAttendance, toggleStudentAttendance } from "../api"; // Assuming you have this API
+import { getAttendance, toggleStudentAttendance } from "../api.js"; // Assuming you have this API
 import * as XLSX from "xlsx"; // Import the xlsx library
 
+// eslint-disable-next-line react/prop-types
 const ViewAttendance = ({ isLoggedIn }) => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ const ViewAttendance = ({ isLoggedIn }) => {
 
   const handleDownloadExcel = () => {
     // Exclude 'id' field before converting to Excel
+    // eslint-disable-next-line no-unused-vars
     const filteredData = attendanceData.map(({ id, ...rest }) => rest);
 
     const worksheet = XLSX.utils.json_to_sheet(filteredData); // Convert filtered data to sheet
@@ -134,9 +136,7 @@ const homeButtonStyle = {
   position: "absolute",
   top: "20px",
   right: "20px",
-  padding: "10px",
   color: "#fff",
-  backgroundColor: "transparent",
   border: "none",
   display: "flex",
   cursor: "pointer",

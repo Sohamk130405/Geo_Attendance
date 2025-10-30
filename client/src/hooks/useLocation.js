@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { getLocation } from "../getlocation";
+
 import { toast } from "react-toastify";
+import { getLocation } from "../getLocation.js";
 
 export const useLocationHandler = () => {
   const [location, setLocation] = useState(null);
