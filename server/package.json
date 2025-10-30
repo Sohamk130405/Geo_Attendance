@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --watch app.js",
+    "start": "node app.js"
+  },
   "dependencies": {
     "@exadel/compreface-js-sdk": "^1.0.0",
     "axios": "^1.7.7",
