@@ -33,3 +33,10 @@ server/.env
 
 client/geo_attendance-privateKey.key
 client/geo_attendance.crt
+
+__pycache__/
+*.pyc
+.env
+*.jpg
+*.png
+*.log
