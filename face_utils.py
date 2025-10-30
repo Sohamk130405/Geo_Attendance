@@ -34,7 +34,7 @@ def encode_face(file_bytes):
         return None, f"Encoding error: {str(e)}"
 
 
-def compare_face_encodings(stored_encoding, new_encoding, tolerance=0.6):
+def compare_face_encodings(stored_encoding, new_encoding, tolerance=0.45):
     """Compare stored encoding with new face encoding."""
     try:
         face_rec = get_face_recognition()
