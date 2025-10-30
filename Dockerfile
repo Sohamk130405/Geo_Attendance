@@ -1,10 +1,10 @@
-# Use a Python image with Debian base (works best for dlib)
+# Use a slim Python base image with Debian (best for dlib + OpenCV)
 FROM python:3.10-slim
 
-# Prevent interactive prompts during install
+# Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and libraries needed by dlib and OpenCV
+# Install system dependencies for dlib, OpenCV, and face_recognition
 RUN apt-get update && apt-get install -y \
     cmake \
     build-essential \
@@ -23,22 +23,26 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Set the working directory
 WORKDIR /app
 
-# Copy and install dependencies
+# Copy only requirements first (for Docker layer caching)
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
 
-# Copy the app source code
+# Upgrade pip and install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
 COPY . .
 
-# Flask will run on port 8080
+# Environment variables
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=production
 ENV PORT=8080
 
-# Expose the port for external access
+# Expose Flask port
 EXPOSE 8080
 
-# Run Flask
+# Start the Flask app
 CMD ["python", "app.py"]
