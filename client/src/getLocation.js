@@ -17,15 +17,17 @@ export function getLocation() {
               reject(new Error("Location information is unavailable."));
               break;
             case error.TIMEOUT:
-              reject(new Error("The request to get user location timed out."));
+              reject(
+                new Error("Getting location took too long. Please try again.")
+              );
               break;
             default:
               reject(new Error("An unknown error occurred."));
           }
         },
         {
-          // enableHighAccuracy: true, // Use GPS for more accurate results
-          timeout: 10000, // Timeout in 10 seconds
+          enableHighAccuracy: true, // Use GPS for more accurate results
+          timeout: 10000, // Timeout in 20 seconds
           maximumAge: 0, // No caching of the location
         }
       );

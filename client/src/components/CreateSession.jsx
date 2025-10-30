@@ -1,8 +1,8 @@
 import { createAttendanceSession } from "../api";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { getLocation } from "../getlocation";
+import { useLocationHandler } from "../hooks/useLocation"; // ✅ use modular hook
 
 const CreateSession = () => {
   const [formData, setFormData] = useState({
@@ -13,122 +13,76 @@ const CreateSession = () => {
   const [branches, setBranches] = useState([]);
   const [divisions, setDivisions] = useState([]);
   const [subjects, setSubjects] = useState([]);
-  const [locationEnabled, setLocationEnabled] = useState(false);
-  const [locationError, setLocationError] = useState("");
-  const [loading, setLoading] = useState(true); // Loading state for location detection
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
+
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchBranchesAndDivisions = () => {
-      const branchesData = ["Comp", "CSAI", "AIDS", "CSAIML"];
-      const divisionsData = ["A", "B", "C", "D"];
-      const subjectData = [
-        "Internet Of Things",
-        "Database Management System",
-        "Data Science",
-        "Object Oriented Programming",
-        "Mobile App Development",
-        "Problem Solving And Programming",
-      ];
-      setBranches(branchesData);
-      setDivisions(divisionsData);
-      setSubjects(subjectData);
-    };
-    fetchBranchesAndDivisions();
+  // ✅ Use centralized location hook
+  const {
+    location,
+    locationError,
+    loading: loadingLocation,
+    refetch,
+  } = useLocationHandler();
 
-    // Force location access when the component is mounted
-    const enableLocation = async () => {
-      try {
-        let result = await getLocation();
-        setLocationEnabled(true);
-        setLoading(false); // Stop loading after fetching location
-        toast.success(result.latitude + "," + result.longitude);
-      } catch (error) {
-        setLocationError("Please enable location services to proceed.");
-        setLoading(false); // Stop loading even if location fetching fails
-        toast.error(error);
-      }
-    };
-    enableLocation();
+  // ✅ Preload dropdown data once
+  useEffect(() => {
+    setBranches(["Comp", "CSAI", "AIDS", "CSAIML"]);
+    setDivisions(["A", "B", "C", "D"]);
+    setSubjects([
+      "Internet Of Things",
+      "Database Management System",
+      "Data Science",
+      "Object Oriented Programming",
+      "Mobile App Development",
+      "Problem Solving And Programming",
+    ]);
   }, []);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!locationEnabled) {
+
+    if (!location) {
       toast.error("Please enable location services before proceeding.");
       return;
     }
 
     const facultyId = localStorage.getItem("facultyId");
-
     if (!facultyId) {
       toast.error("Faculty ID is not available. Please log in again.");
-      return;
+      navigate("/");
     }
-
+    setLoadingSubmit(true);
     try {
-      const location = await getLocation();
       const response = await createAttendanceSession({
         ...formData,
         facultyId,
         ...location,
       });
-      toast.success("Attendance session created successfully!");
+      toast.success("✅ Attendance session created successfully!");
       navigate(`/view-attendance/${response.data.sessionId}`);
     } catch (error) {
-      console.error("Error creating session:", error);
-      toast.error("Failed to create attendance session.");
+      const message =
+        error.response?.data?.message ||
+        "An unexpected error occurred. Please try again.";
+      toast.error(message);
+      console.error("Error creating attendance session:", error);
+    } finally {
+      setLoadingSubmit(false);
     }
-  };
-
-  const errorContainerStyle = {
-    textAlign: "center",
-    padding: "20px",
-    backgroundColor: "#ffdddd",
-    borderRadius: "5px",
-    color: "#d8000c",
-    marginBottom: "20px",
-    fontSize: "18px",
-  };
-
-  const spinnerStyle = {
-    width: "50px",
-    height: "50px",
-    border: "5px solid #f3f3f3", // Light gray
-    borderTop: "5px solid #3498db", // Blue
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-    margin: "0 auto",
-  };
-
-  const homeButtonStyle = {
-    position: "absolute",
-    top: "20px",
-    right: "20px",
-    padding: "10px",
-    color: "#fff",
-    backgroundColor: "transparent",
-    border: "none",
-    display: "flex",
-    cursor: "pointer",
-    alignItems: "center",
-    gap: "4px",
-    padding: "10px 15px",
-    backgroundColor: "#007bff",
-    borderRadius: "4px",
   };
 
   return (
     <div style={containerStyle}>
+      <h1 style={headerStyle}>Create Session</h1>
       <button onClick={() => navigate("/")} style={homeButtonStyle}>
-        {" "}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -140,21 +94,23 @@ const CreateSession = () => {
         </svg>
         Home
       </button>
-      {loading ? (
-        <div>
+
+      {/* ✅ Loading Spinner */}
+      {loadingLocation ? (
+        <div style={loaderBox}>
           <div style={spinnerStyle}></div>
-          <p>Detecting location...</p>
+          <p>Detecting your location...</p>
         </div>
-      ) : !locationEnabled ? (
+      ) : locationError ? (
         <div style={errorContainerStyle}>
-          <h2>
-            {locationError ||
-              "Location services are required to create a session."}
-          </h2>
+          <h3>{locationError}</h3>
+          <button onClick={refetch} style={retryButtonStyle}>
+            Retry Location
+          </button>
         </div>
       ) : (
+        // ✅ Form
         <>
-          <h1 style={headerStyle}>Create Attendance Session</h1>
           <form onSubmit={handleSubmit} style={formStyle}>
             <div style={divStyle}>
               <select
@@ -206,8 +162,16 @@ const CreateSession = () => {
                 </option>
               ))}
             </select>
-            <button type="submit" style={buttonStyle}>
-              Create Session
+            <button
+              type="submit"
+              style={{
+                ...buttonStyle,
+                backgroundColor: loadingSubmit ? "#aaa" : "#007bff",
+                cursor: loadingSubmit ? "not-allowed" : "pointer",
+              }}
+              disabled={loadingSubmit}
+            >
+              {loadingSubmit ? "Creating Session..." : "Create Session"}
             </button>
           </form>
         </>
@@ -218,14 +182,63 @@ const CreateSession = () => {
 
 export default CreateSession;
 
+/* ----------------------------- Styling Section ----------------------------- */
+
 const containerStyle = {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
   height: "100vh",
-  backgroundColor: "#f0f4f8", // Light blue-gray background
+  backgroundColor: "#f0f4f8",
   textAlign: "center",
+};
+
+const retryButtonStyle = {
+  marginTop: "10px",
+  backgroundColor: "#007bff",
+  color: "#fff",
+  border: "none",
+  borderRadius: "6px",
+  padding: "8px 16px",
+  cursor: "pointer",
+};
+
+const loaderBox = { textAlign: "center" };
+
+const errorContainerStyle = {
+  textAlign: "center",
+  padding: "20px",
+  backgroundColor: "#ffdddd",
+  borderRadius: "5px",
+  color: "#d8000c",
+  marginBottom: "20px",
+  fontSize: "18px",
+};
+
+const spinnerStyle = {
+  width: "50px",
+  height: "50px",
+  border: "5px solid #f3f3f3",
+  borderTop: "5px solid #3498db",
+  borderRadius: "50%",
+  animation: "spin 1s linear infinite",
+  margin: "0 auto",
+};
+
+const homeButtonStyle = {
+  position: "absolute",
+  top: "20px",
+  right: "20px",
+  color: "#fff",
+  display: "flex",
+  cursor: "pointer",
+  alignItems: "center",
+  gap: "4px",
+  padding: "10px 15px",
+  backgroundColor: "#007bff",
+  borderRadius: "4px",
+  border: "none",
 };
 
 const spin = `
@@ -234,14 +247,13 @@ const spin = `
   100% { transform: rotate(360deg); }
 }
 `;
-
 document.head.insertAdjacentHTML("beforeend", `<style>${spin}</style>`);
 
 const headerStyle = {
   position: "absolute",
-  top: "5%",
+  top: "10%",
   fontSize: "2rem",
-  color: "#111", // Primary blue color for text
+  color: "#111",
   marginBottom: "40px",
   border: "2px solid #444",
   padding: "10px",

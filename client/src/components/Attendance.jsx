@@ -1,199 +1,178 @@
-import React, { useState, useEffect } from "react";
+// 📁 src/pages/Attendance.jsx
+import { useState } from "react";
 import { markAttendance } from "../api";
 import { toast } from "react-toastify";
-import { getLocation } from "../getlocation";
 import { useNavigate } from "react-router-dom";
+import { useLocationHandler } from "../hooks/useLocation";
 
+
+/* ---------------------------- Main Component ---------------------------- */
 const Attendance = () => {
+  const navigate = useNavigate();
+  const {
+    location,
+    loading: loadingLocation,
+    error: locationError,
+    refetch,
+  } = useLocationHandler();
+
   const [formData, setFormData] = useState({
     prn: "",
     sessionId: "",
     facePhoto: null,
   });
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [fileName, setFileName] = useState("No file chosen");
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [locationEnabled, setLocationEnabled] = useState(false);
-  const [locationError, setLocationError] = useState("");
-  const [loadingLocation, setLoadingLocation] = useState(true); // New state for location loading
 
-  useEffect(() => {
-    const enableLocation = async () => {
-      try {
-        let result = await getLocation();
-        setLocationEnabled(true);
-      } catch (error) {
-        setLocationError("Please enable location services to proceed.");
-        toast.error(error);
-      } finally {
-        setLoadingLocation(false); 
-      }
-    };
-    enableLocation();
-  }, []);
+  /* ---------------------------- Handlers ---------------------------- */
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) =>
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleFileChange = (e) => {
+    e.preventDefault();
     const file = e.target.files[0];
-    setFormData({ ...formData, facePhoto: file });
-    setFileName(file ? "Face Uploaded" : "No file chosen");
+    if (!file) return;
 
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setPreviewUrl(null);
-    }
+    setFormData((prev) => ({ ...prev, facePhoto: file }));
+    setFileName("Face Uploaded");
+
+    const reader = new FileReader();
+    reader.onloadend = () => setPreviewUrl(reader.result);
+    reader.readAsDataURL(file);
+
+    e.target.value = ""; // reset input so same file can be uploaded again
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
-    if (!locationEnabled) {
-      toast.error("Please enable location services before proceeding.");
-      setLoading(false);
+    if (!formData.prn || !formData.sessionId) {
+      toast.error("Please fill all fields.");
+      return;
+    }
+    if (!formData.facePhoto) {
+      toast.error("Please upload your face photo.");
+      return;
+    }
+    if (!location) {
+      toast.error("Location is required before marking attendance.");
       return;
     }
 
+    setLoadingSubmit(true);
     try {
       const form = new FormData();
-      for (const key in formData) {
-        form.append(key, formData[key]);
-      }
-      const location = await getLocation();
-      form.append("studentLongitude", location.longitude);
+      form.append("prn", formData.prn);
+      form.append("sessionId", formData.sessionId);
+      form.append("facePhoto", formData.facePhoto);
       form.append("studentLatitude", location.latitude);
+      form.append("studentLongitude", location.longitude);
+
       const response = await markAttendance(form);
 
       if (response.status === 201) {
-        toast.success("Attendance marked successfully!");
-        navigate("/view-attendance/" + formData.sessionId);
+        toast.success("✅ Attendance marked successfully!");
+        navigate(`/view-attendance/${formData.sessionId}`);
+      } else {
+        toast.error(response?.data?.message || "Failed to mark attendance.");
       }
     } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        "An unexpected error occurred. Please try again.";
+      toast.error(message);
       console.error("Error marking attendance:", error);
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        toast.error(
-          `Failed to mark attendance: ${error.response.data.message}`
-        );
-      } else {
-        toast.error("An unexpected error occurred. Please try again.");
-      }
     } finally {
-      setLoading(false);
+      setLoadingSubmit(false);
     }
   };
 
-  const buttonStyle = {
-    padding: "10px 20px",
-    fontSize: "16px",
-    cursor: loading ? "not-allowed" : "pointer",
-    borderRadius: "5px",
-    backgroundColor: "beige",
-    color: "black",
-    border: "none",
-    transition: "all 0.3s ease",
-    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-    opacity: loading ? 0.6 : 1,
-  };
-
-  const errorContainerStyle = {
-    textAlign: "center",
-    padding: "20px",
-    backgroundColor: "#ffdddd",
-    borderRadius: "5px",
-    color: "#d8000c",
-    marginBottom: "20px",
-    fontSize: "18px",
-  };
-
-  const spinnerStyle = {
-    width: "50px",
-    height: "50px",
-    border: "5px solid #f3f3f3", // Light gray
-    borderTop: "5px solid #3498db", // Blue
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-    margin: "0 auto",
-  };
+  /* ---------------------------- Render UI ---------------------------- */
 
   return (
     <div style={containerStyle}>
+      <h1 style={headerStyle}>📸 Mark Attendance</h1>
+
+      {/* Location Loader */}
       {loadingLocation ? (
-        <div>
+        <div style={loaderBox}>
           <div style={spinnerStyle}></div>
-          <p>Detecting location...</p>
+          <p>Detecting your location...</p>
         </div>
-      ) : !locationEnabled ? (
+      ) : locationError ? (
         <div style={errorContainerStyle}>
-          <h2>
-            {locationError ||
-              "Location services are required to mark attendance."}
-          </h2>
+          <h3>{locationError}</h3>
+          <button onClick={refetch} style={retryButtonStyle}>
+            Retry Location
+          </button>
         </div>
       ) : (
-        <>
-          <h1 style={headerStyle}>Mark Attendance</h1>
-          <form onSubmit={handleSubmit} style={formStyle}>
-            <input
-              type="text"
-              name="prn"
-              placeholder="PRN"
-              value={formData.prn}
-              onChange={handleChange}
-              required
-              style={inputStyle}
-            />
-            <input
-              type="text"
-              name="sessionId"
-              placeholder="Session ID"
-              value={formData.sessionId}
-              onChange={handleChange}
-              required
-              style={inputStyle}
-            />
+        <form onSubmit={handleSubmit} style={formStyle}>
+          <input
+            type="text"
+            name="prn"
+            placeholder="PRN"
+            value={formData.prn}
+            onChange={handleChange}
+            required
+            style={inputStyle}
+          />
 
-            <div style={fileUploadContainer}>
-              <label htmlFor="facePhoto" style={customFileInputButton}>
-                Upload Face Photo
-              </label>
-              <span style={fileNameStyle}>{fileName}</span>
-              <input
-                id="facePhoto"
-                type="file"
-                name="facePhoto"
-                onChange={handleFileChange}
-                style={hiddenFileInput}
-                capture
-              />
-            </div>
-            {previewUrl && (
-              <img src={previewUrl} alt="Face Preview" style={previewStyle} />
-            )}
+          <input
+            type="text"
+            name="sessionId"
+            placeholder="Session ID"
+            value={formData.sessionId}
+            onChange={handleChange}
+            required
+            style={inputStyle}
+          />
 
-            <button type="submit" style={buttonStyle} disabled={loading}>
-              {loading ? "Marking Attendance..." : "Mark Attendance"}
-            </button>
-          </form>
-        </>
+          {/* File Upload */}
+          <div style={fileUploadContainer}>
+            <label htmlFor="facePhoto" style={customFileInputButton}>
+              Upload Face Photo
+            </label>
+            <input
+              id="facePhoto"
+              type="file"
+              accept="image/*"
+              name="facePhoto"
+              onClick={(e) => e.stopPropagation()}
+              onChange={handleFileChange}
+              style={hiddenFileInput}
+              capture
+            />
+            <span style={fileNameStyle}>{fileName}</span>
+          </div>
+
+          {previewUrl && (
+            <img src={previewUrl} alt="Face Preview" style={previewStyle} />
+          )}
+
+          <button
+            type="submit"
+            style={{
+              ...buttonStyle,
+              backgroundColor: loadingSubmit ? "#aaa" : "#007bff",
+              cursor: loadingSubmit ? "not-allowed" : "pointer",
+            }}
+            disabled={loadingSubmit}
+          >
+            {loadingSubmit ? "Marking Attendance..." : "Mark Attendance"}
+          </button>
+        </form>
       )}
     </div>
   );
 };
 
 export default Attendance;
+
+/* ---------------------------- Styles ---------------------------- */
 
 const containerStyle = {
   display: "flex",
@@ -203,6 +182,45 @@ const containerStyle = {
   height: "100vh",
   backgroundColor: "#f0f4f8", // Light blue-gray background
   textAlign: "center",
+};
+
+const buttonStyle = {
+  padding: "10px 20px",
+  border: "none",
+  borderRadius: "6px",
+  color: "#fff",
+  fontSize: "16px",
+  transition: "background 0.3s ease",
+  width: "100%",
+};
+
+const errorContainerStyle = {
+  backgroundColor: "#ffe6e6",
+  color: "#b00020",
+  padding: "20px",
+  borderRadius: "10px",
+  textAlign: "center",
+};
+
+const retryButtonStyle = {
+  marginTop: "10px",
+  backgroundColor: "#007bff",
+  color: "#fff",
+  border: "none",
+  borderRadius: "6px",
+  padding: "8px 16px",
+  cursor: "pointer",
+};
+
+const loaderBox = { textAlign: "center" };
+const spinnerStyle = {
+  width: "50px",
+  height: "50px",
+  border: "5px solid #ddd",
+  borderTop: "5px solid #007bff",
+  borderRadius: "50%",
+  animation: "spin 1s linear infinite",
+  margin: "20px auto",
 };
 
 const headerStyle = {
@@ -266,12 +284,14 @@ const previewStyle = {
   objectFit: "cover",
 };
 
-// Add the spinning animation
+// Keyframes for spinner
 const spin = `
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}`;
+if (typeof document !== "undefined") {
+  const styleTag = document.createElement("style");
+  styleTag.innerHTML = spin;
+  document.head.appendChild(styleTag);
 }
-`;
-
-document.head.insertAdjacentHTML("beforeend", `<style>${spin}</style>`);
