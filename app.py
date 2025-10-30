@@ -6,6 +6,7 @@ from io import BytesIO
 from PIL import ImageEnhance, Image
 import logging
 import face_recognition
+import os
 app = Flask(__name__)
 
 # In-memory storage for face encodings
@@ -139,4 +140,5 @@ def compare_faces():
         return jsonify({'error': message}), 400
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)

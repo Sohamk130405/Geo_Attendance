@@ -34,11 +34,11 @@ RUN pip install -r requirements.txt
 # Copy the app source code
 COPY . .
 
-# Flask will run on port 5000
-ENV PORT=5000
+# Flask will run on port 8080
+ENV PORT=8080
 
 # Expose the port for external access
-EXPOSE 5000
+EXPOSE 8080
 
 # Run Flask
 CMD ["python", "app.py"]
