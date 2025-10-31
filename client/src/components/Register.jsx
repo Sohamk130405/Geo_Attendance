@@ -1,8 +1,8 @@
 //components/Register.jsx
-import { registerStudent } from "../api";
+import { registerStudent } from "../api.js";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify"; // Make sure to import toast
-import { getDeviceFingerprint } from "../getFingerprint";
+import { getDeviceFingerprint } from "../getFingerprint.js";
 
 const Register = () => {
   const [formData, setFormData] = useState({

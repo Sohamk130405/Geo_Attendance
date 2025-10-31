@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getAttendance, toggleStudentAttendance } from "../api"; // Assuming you have this API
+import { getAttendance, toggleStudentAttendance } from "../api.js"; // Assuming you have this API
 import * as XLSX from "xlsx"; // Import the xlsx library
 
 const ViewAttendance = ({ isLoggedIn }) => {

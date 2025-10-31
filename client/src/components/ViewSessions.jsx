@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getFacultySessions } from "../api"; // Assuming you have this API
+import { getFacultySessions } from "../api.js"; // Assuming you have this API
 import { toast } from "react-toastify";
 
 const ViewSessions = ({ facultyId }) => {

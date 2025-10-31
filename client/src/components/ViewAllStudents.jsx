@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAllStudents } from "../api"; // Import your API call
+import { getAllStudents } from "../api.js"; // Import your API call
 
 const ViewAllStudents = () => {
   const [students, setStudents] = useState([]);

@@ -1,10 +1,10 @@
 // 📁 src/pages/Attendance.jsx
 import { useState } from "react";
-import { markAttendance } from "../api";
+import { markAttendance } from "../api.js";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useLocationHandler } from "../hooks/useLocation";
-import { getDeviceFingerprint } from "../getFingerprint";
+import { getDeviceFingerprint } from "../getFingerprint.js";
 
 /* ---------------------------- Main Component ---------------------------- */
 const Attendance = () => {
