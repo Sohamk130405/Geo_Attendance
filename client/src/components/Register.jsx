@@ -1,6 +1,6 @@
 //components/Register.jsx
 import { registerStudent } from "../api";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify"; // Make sure to import toast
 
 const Register = () => {
