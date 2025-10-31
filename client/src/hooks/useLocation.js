@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getLocation } from "../getlocation.js";
+import { getLocation } from "../getLocation.js";
 import { toast } from "react-toastify";
 
 export const useLocationHandler = () => {
