@@ -1,16 +1,15 @@
 // controllers/authController.js
 const db = require("../config/db");
-const { getMacAddress } = require("../services/macService");
 const { getFaceId } = require("../services/faceService");
 const {
   createStudent,
   getStudentByPRN,
-  getStudentByMac,
+  getStudentByDevice,
 } = require("../services/studentService");
 
 exports.registerStudent = async (req, res) => {
   try {
-    const { name, prn, rollNo, branch, division } = req.body;
+    const { name, prn, rollNo, branch, division, deviceFingerprint } = req.body;
     const facePhoto = req.file;
 
     if (!(name && prn && rollNo && branch && division && facePhoto)) {
@@ -19,14 +18,9 @@ exports.registerStudent = async (req, res) => {
         .json({ message: "Missing required fields or face photo." });
     }
 
-    const clientIp =
-      req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-
-    const macAddress = await getMacAddress(clientIp);
-
     // 🧠 Check for existing student (by PRN or MAC)
     const existingStudent = await getStudentByPRN(prn);
-    const existingMac = await getStudentByMac(macAddress);
+    const existingDevice = await getStudentByDevice(deviceFingerprint);
 
     if (existingStudent) {
       return res
@@ -34,12 +28,10 @@ exports.registerStudent = async (req, res) => {
         .json({ message: "Student with this PRN already exists." });
     }
 
-    if (existingMac) {
-      return res
-        .status(409)
-        .json({
-          message: "This device is already registered with another student.",
-        });
+    if (existingDevice) {
+      return res.status(409).json({
+        message: "This device is already registered with another student.",
+      });
     }
 
     // Parallelize face ID generation and DB insert
@@ -51,7 +43,7 @@ exports.registerStudent = async (req, res) => {
       rollNo,
       branch,
       division,
-      macAddress,
+      deviceFingerprint,
       faceId,
     });
 

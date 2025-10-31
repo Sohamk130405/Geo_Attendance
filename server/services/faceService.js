@@ -17,7 +17,6 @@ exports.compareFace = async (facePhoto, storedFaceId) => {
   return data.match;
 };
 
-
 exports.getFaceId = async (facePhoto, prn) => {
   const formData = new FormData();
   formData.append("face_photo", fs.createReadStream(facePhoto.path));
@@ -27,7 +26,7 @@ exports.getFaceId = async (facePhoto, prn) => {
     const { data } = await axios.post(
       `${process.env.PYTHON_URL}/generate_faceid`,
       formData,
-      { headers: formData.getHeaders(), timeout: 10000 }
+      { headers: formData.getHeaders() }
     );
 
     return data.faceId;

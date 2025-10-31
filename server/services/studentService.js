@@ -3,16 +3,16 @@ const db = require("../config/db");
 
 // ✅ Create new student record
 exports.createStudent = (studentData) => {
-  const { name, prn, rollNo, branch, division, macAddress, faceId } =
+  const { name, prn, rollNo, branch, division, deviceFingerprint, faceId } =
     studentData;
   const sql = `
-    INSERT INTO students (name, prn, roll_no, branch, division, mac_address, face_id)
+    INSERT INTO students (name, prn, roll_no, branch, division, device_fingerprint, face_id)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
   return new Promise((resolve, reject) => {
     db.query(
       sql,
-      [name, prn, rollNo, branch, division, macAddress, JSON.stringify(faceId)],
+      [name, prn, rollNo, branch, division, deviceFingerprint, JSON.stringify(faceId)],
       (err, result) => {
         if (err) reject(err);
         else resolve(result);
@@ -32,11 +32,11 @@ exports.getStudentByPRN = (prn) => {
 };
 
 // ✅ Optional: Get student by MAC address
-exports.getStudentByMac = (macAddress) => {
+exports.getStudentByDevice = (deviceFingerprint) => {
   return new Promise((resolve, reject) => {
     db.query(
-      "SELECT * FROM students WHERE mac_address = ?",
-      [macAddress],
+      "SELECT * FROM students WHERE device_fingerprint = ?",
+      [deviceFingerprint],
       (err, result) => {
         if (err) reject(err);
         else resolve(result[0]);

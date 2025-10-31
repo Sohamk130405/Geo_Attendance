@@ -4,7 +4,7 @@ import { markAttendance } from "../api";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useLocationHandler } from "../hooks/useLocation";
-
+import { getDeviceFingerprint } from "../getFingerprint";
 
 /* ---------------------------- Main Component ---------------------------- */
 const Attendance = () => {
@@ -65,11 +65,13 @@ const Attendance = () => {
     setLoadingSubmit(true);
     try {
       const form = new FormData();
+      const fingerprint = await getDeviceFingerprint();
       form.append("prn", formData.prn);
       form.append("sessionId", formData.sessionId);
       form.append("facePhoto", formData.facePhoto);
       form.append("studentLatitude", location.latitude);
       form.append("studentLongitude", location.longitude);
+      form.append("deviceFingerprint", fingerprint);
 
       const response = await markAttendance(form);
 

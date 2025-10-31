@@ -1,6 +1,5 @@
 const db = require("../config/db");
 const faceService = require("./faceService");
-const macService = require("./macService");
 const geoService = require("./geoService");
 const fileUtils = require("../utils/fileUtils");
 const { promisify } = require("util");
@@ -67,9 +66,10 @@ exports.markAttendance = async (req) => {
     sessionId,
     studentLatitude,
     studentLongitude,
+    deviceFingerprint,
     maxDistance = 500,
   } = req.body;
-  const studentIp = macService.extractIPv4(req.ip);
+  
   const facePhoto = req.file;
 
   const [student] = await query("SELECT * FROM students WHERE prn = ?", [prn]);
@@ -100,9 +100,8 @@ exports.markAttendance = async (req) => {
   );
   if (marked) throw new Error("Attendance already marked");
 
-  const detectedMac = await macService.getMacAddress(studentIp);
-  if (student.mac_address.toLowerCase() !== detectedMac.toLowerCase())
-    throw new Error("MAC mismatch");
+  if (student.device_fingerprint !== deviceFingerprint)
+    throw new Error("Device mismatch");
 
   const faceMatch = await faceService.compareFace(facePhoto, student.face_id);
   if (!faceMatch) throw new Error("Face mismatch");

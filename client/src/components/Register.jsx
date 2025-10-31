@@ -2,6 +2,7 @@
 import { registerStudent } from "../api";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify"; // Make sure to import toast
+import { getDeviceFingerprint } from "../getFingerprint";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -64,6 +65,8 @@ const Register = () => {
       for (const key in formData) {
         form.append(key, formData[key]);
       }
+      const fingerprint = await getDeviceFingerprint();
+      form.append("deviceFingerprint", fingerprint);
 
       const response = await registerStudent(form);
 
